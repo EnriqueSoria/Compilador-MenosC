@@ -34,6 +34,8 @@ comentario \/\/[^\n]*\n
 "="  {ECHO; return ASIGNACION_;}
 "+="  {ECHO; return MASIGUAL_;}
 "-="  {ECHO; return MENOSIGUAL_;}
+"++"  {ECHO; return INCREMENTO_;}
+"--"  {ECHO; return DECREMENTO_;}
 
 
 "=="  {ECHO; return IGUALDAD_;}
