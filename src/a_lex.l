@@ -52,7 +52,7 @@ comentario \/\/[^\n]*\n
 
 {comentario}  {}
 {delimitador}  {}
-";" { return PTOCOMA_; }
+";" {ECHO; return PTOCOMA_; }
 
 
 "("  {ECHO; return PARENTESIS_AB_;}
@@ -64,7 +64,7 @@ comentario \/\/[^\n]*\n
 {integer} { ECHO; return CTE_;}
 {float} {ECHO; return CTE_;}
 
-{id}  {return ID_;}
+{id}  {ECHO; return ID_;}
 .  {yyerror("Caracter desconocido");}
 
 %%
