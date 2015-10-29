@@ -1,5 +1,6 @@
 %{
   #include <stdio.h>
+  #include "a_sintactico.tab.h"
 %}
 
 %option yylineno
@@ -60,19 +61,14 @@ comentario \/\/[^\n]*\n
 "}"  {ECHO; return CORCHETE_CERR_;}
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
-{integer} { yyval.cent = atoi( yytext );
-            return CTE_;}
-{float} {yyval.cent = atoi( yytext );
-          return CTE_;}
+{integer} { ECHO; return CTE_;}
+{float} {ECHO; return CTE_;}
 
 {id}  {return ID_;}
 .  {yyerror("Caracter desconocido");}
 
 %%
 
-int yyerror(char *c) {
-  printf("%s en la linea %s", c, yyleno);
-}
 
 int main (int argc, char *argv[]) {
   if ( (yyin=fopen(argv[1], "r")) == NULL ) {
