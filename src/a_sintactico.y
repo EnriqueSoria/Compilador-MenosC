@@ -7,7 +7,6 @@ extern int yylineno;
 %token FLOAT_
 %token WHILE_
 %token IF_
-%token ELSE_
 %token INT_
 %token BOOL_
 %token READ_
@@ -17,6 +16,7 @@ extern int yylineno;
 %token SUMA_
 %token RESTA_
 %token MULT_
+%token ELSE_
 %token DIV_
 %token ASIGNACION_
 %token MASIGUAL_
@@ -62,7 +62,7 @@ tipoSimple: INT_
         | BOOL_
         ;
 
-instruccion: CLAUDATOR_AB_ listaInstrucciones CLAUDATOR_CERR_
+instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
         | instruccionExpresion
         | instruccionEntradaSalida
         | instruccionSeleccion
@@ -81,9 +81,6 @@ instruccionEntradaSalida: READ_ PARENTESIS_AB_ ID_ PARENTESIS_CERR_ PTOCOMA_
         | PRINT_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ PTOCOMA_
         ;
 
-instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion
-        ;
-
 instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion ELSE_ instruccion
         ;
 
@@ -100,6 +97,7 @@ expresionLogica: expresionIgualdad
         ;
 
 expresionIgualdad: expresionRelacional
+	| expresionIgualdad operadorIgualdad expresionRelacional
         ;
 
 expresionRelacional: expresionAditiva
@@ -137,7 +135,7 @@ operadorLogico: COMPARADOR_AND_
         | COMPARADOR_OR_
         ;
 
-operadorIncremento: IGUALDAD_
+operadorIgualdad: IGUALDAD_
         | DESIGUAL_
         ;
 
@@ -165,9 +163,7 @@ operadorIncremento: INCREMENTO_
         ;
 
 %%
-
 /* Llamada por yyparse ante un error */
 yyerror (char *s){
         printf ("Linea %d: %s\n", yylineno, s);
 }
-
