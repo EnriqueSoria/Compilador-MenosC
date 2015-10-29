@@ -7,6 +7,7 @@ extern int yylineno;
 %token FLOAT_
 %token WHILE_
 %token IF_
+%token ELSE_
 %token INT_
 %token BOOL_
 %token READ_
@@ -95,7 +96,7 @@ expresion: expresionLogica
         ;
 
 expresionLogica: expresionIgualdad
-        | espresionLogica operadorLogico expresionIgualdad
+        | expresionLogica operadorLogico expresionIgualdad
         ;
 
 expresionIgualdad: expresionRelacional
