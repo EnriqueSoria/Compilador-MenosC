@@ -17,6 +17,7 @@ comentario \/\/[^\n]*\n
 
 "while" {ECHO; return WHILE_;}
 "if"  {ECHO; return IF_;}
+"else" {ECHO; return ELSE_;}
 
 "int"  {ECHO; return INT_;}
 "bool" {ECHO; return BOOL_;}
@@ -50,8 +51,8 @@ comentario \/\/[^\n]*\n
 ">"   {ECHO; return MAYOR_QUE_;}
 
 
-{comentario}  {}
-{delimitador}  {}
+{comentario}  {ECHO;}
+{delimitador}  {ECHO;}
 ";" {ECHO; return PTOCOMA_; }
 
 
