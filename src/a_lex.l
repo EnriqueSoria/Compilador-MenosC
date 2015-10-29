@@ -37,6 +37,7 @@ comentario \/\/[^\n]*\n
 
 
 "=="  {ECHO; return IGUALDAD_;}
+"!="  {ECHO; return DESIGUAL_;}
 "&&"  {ECHO; return COMPARADOR_AND_;}
 "||"  {ECHO; return COMPARADOR_OR_;}
 "<="  {ECHO; return MENOR_IGUAL_;}
