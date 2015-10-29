@@ -69,7 +69,7 @@ instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
         | instruccionIteracion
         ;
 
-listaInstrucciones: 
+listaInstrucciones:
         | listaInstrucciones instruccion
         ;
 
@@ -119,7 +119,7 @@ expresionUnaria: expresionSufija
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
         | PARENTESIS_AB_ expresion PARENTESIS_CERR_
-        | ID_ 
+        | ID_
         | ID_ operadorIncremento
         | CTE_
         | TRUE_
@@ -165,5 +165,5 @@ operadorIncremento: INCREMENTO_
 %%
 /* Llamada por yyparse ante un error */
 yyerror (char *s){
-        printf ("Linea %d: %s\n", yylineno, s);
+        printf ("\nLinea %d: %s\n", yylineno, s);
 }
