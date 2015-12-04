@@ -1,27 +1,21 @@
 %{
 #include <stdio.h>
-#include "../include/libtds.h"
-#include "../include/libgci.h"
-#include "../include/header.h"
-
-void creaNombre(); void creaCentera(); void truncCreal();
-
-
-extern int yylineno;
+#include <string.h>
+#include "libtds.h"
+#include "libgci.h"
+#include "header.h"
 %}
 
 %union{
         char* ident; /* Nombre del ID */
         int tipo; /* Tipo de la expresion */
-		int cent; /* Valor constante */
+		    int cent; /* Valor constante */
         int pos;
-		int ident;
         int op;	 /* Operacion */
         int uni; /* Tipo del operador unario */
 
-		struct {
-			int tipo
-
+    struct {
+			int tipo;
 		}tipoYpos;
 }
 
