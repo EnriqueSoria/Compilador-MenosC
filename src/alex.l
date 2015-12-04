@@ -1,6 +1,6 @@
 %{
   #include <stdio.h>
-  #include "a_sintactico.tab.h"
+  #include "asin.h"
 %}
 
 %option yylineno
@@ -63,11 +63,16 @@ comentario \/\/[^\n]*\n
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
 
-{integer}	{ crearCentera(); return CTE_;}
+{integer}	{ yylval.cent = atoi( yytext ); return CTE_;}
 
-{float}		{ truncCreal();return CTE_;}
+{float}		{	yywarn( "Real truncado" );
+				yylval.cent = atoi( yytext );
+				return CTE_;
+			}
 
-{id}		{creaNombre();return ID_;}
+{id}		{	if ( strlen( yytext ) > 14 ) yywarn( "Identificador excesivo" );
+				return ID_;
+			}
 
 .  		{yyerror("Caracter desconocido");}
 
