@@ -63,16 +63,11 @@ comentario \/\/[^\n]*\n
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
 
-{integer}	{ yylval.cent = atoi( yytext ); return CTE_;}
+{integer}	{ crearCentera(); return CTE_;}
 
-{float}		{	yywarn( "Real truncado" );
-				yylval.cent = atoi( yytext );
-				return CTE_;
-			}
+{float}		{ truncCreal();return CTE_;}
 
-{id}		{	if ( strlen( yytext ) > 14 ) yywarn( "Identificador excesivo" ); 
-				return ID_;
-			}
+{id}		{creaNombre();return ID_;}
 
 .  		{yyerror("Caracter desconocido");}
 .  {yyerror("Caracter desconocido");}
