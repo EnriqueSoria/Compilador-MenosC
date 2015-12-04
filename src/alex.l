@@ -1,5 +1,7 @@
 %{
   #include <stdio.h>
+  #include <string.h>
+  #include "header.h"
   #include "asin.h"
 %}
 
@@ -63,14 +65,13 @@ comentario \/\/[^\n]*\n
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
 
-{integer}	{ yylval.cent = atoi( yytext ); return CTE_;}
+{integer}	{ creaCentera(); return CTE_;}
 
-{float}		{	yywarn( "Real truncado" );
-				yylval.cent = atoi( yytext );
+{float}		{	truncCreal();
 				return CTE_;
 			}
 
-{id}		{	if ( strlen( yytext ) > 14 ) yywarn( "Identificador excesivo" );
+{id}		{	creaNombre();
 				return ID_;
 			}
 
