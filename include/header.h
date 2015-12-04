@@ -28,6 +28,7 @@ extern int dvar;              /* Desplazamiento en el Segmento de Variables  */
 
 /********************************************************************************/
  /* Comprueba que el identificador no exceda la talla maxima (14) o lo trunca    */
+
 void creaNombre(){
 
 	char *t;
