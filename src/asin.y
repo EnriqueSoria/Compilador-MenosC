@@ -1,8 +1,20 @@
 %{
 #include <stdio.h>
+#include <libtds.h>
+
+#include <header.h>
 extern int yylineno;
 %}
 
+%union{
+        char* t_id;
+        int t_tipo;
+        int t_pos;
+        int t_op;
+        int t_uni;
+}
+
+%token YYERROR_VERBOSE_
 %token ID_
 %token FLOAT_
 %token WHILE_
@@ -41,6 +53,17 @@ extern int yylineno;
 %token INCREMENTO_
 %token DECREMENTO_
 
+
+%type <t_tipo> tipoSimple
+%type <t_tipo> operadorIncremento
+%type <t_tipo> operadorLogico
+%type <t_tipo> operadorIgualdad
+%type <t_op> operadorAditivo
+%type <t_op> operadorMultiplicativo
+%type <t_op> operadorAsignacion
+%type <t_op> operadorRelacional
+%type <t_uni> operadorUnario
+
 %%
 
 programa: CORCHETE_AB_ secuenciaSentencias CORCHETE_CERR_
@@ -54,13 +77,26 @@ sentencia: declaracion
         | instruccion
         ;
 
-declaracion: tipoSimple ID_ PTOCOMA_
-        | tipoSimple ID_ CLAUDATOR_AB_ CTE_ CLAUDATOR_CERR_ PTOCOMA_
-        ;
+declaracion: tipoSimple ID_ PTOCOMA_ {
+                if (! insertarTSimpleTDS($2, $1, dvasr)){
+                        yyerror ("Identificador repetido");
+					}
+                else {dvar += TALLA_TIPO_SIMPLE;}
+        }|
+        tipoSimple ID_ CLAUDATOR_AB_ CTE_ CLAUDATOR_CERR_ PTOCOMA_ {
+                int numelem = $4;
+                if ($4 <= 0){
+                        yyerror("Talla inapropiada");
+                        numelem = 0;
+                }
+                if (! insertarTVectorTDS ($2, T_ARRAY, dvar, $1, numelem))
+                        yyerror("Identificador repetido");
+                else dvar += numelem * TALLA_TIPO_SIMPLE;
 
-tipoSimple: INT_
-        | BOOL_
-        ;
+        };
+
+tipoSimple: INT_ { $$ = T_ENTERO; }
+        | BOOL_ { $$ = T_LOGICO; };
 
 instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
         | instruccionExpresion
@@ -73,22 +109,44 @@ listaInstrucciones:
         | listaInstrucciones instruccion
         ;
 
-instruccionExpresion: expresion PTOCOMA_
+instruccionExpresion: expresion PTOCOMA_{ if ($1.tipo = T_LOGICO) yyerror ("Tipo no valido"); }
         | PTOCOMA_
         ;
 
+
 instruccionEntradaSalida: READ_ PARENTESIS_AB_ ID_ PARENTESIS_CERR_ PTOCOMA_
+                            {    SIMB s = obtenerTDS($3);
+                                if(s.tipo!=T_ENTERO || s.tipo != T_LOGICO) yyerror("Tipo no valido");
+
+                            }
+
         | PRINT_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ PTOCOMA_
+            {    SIMB s = obtenerTDS($3);
+                if(s.tipo!=T_ENTERO || s.tipo!= T_BOOL) yyerror("Tipo no valido");
+
+            }
         ;
 
-instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion ELSE_ instruccion
-        ;
+instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_
+                        { if($3.tipo != T_LOGICO) yyerror("Tipo no valido");}
 
+
+instruccion ELSE_ instruccion
+        ;
 instruccionIteracion: WHILE_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion
+                    { if($3.tipo != T_LOGICO) yyerror("Tipo no valido");}
         ;
 
 expresion: expresionLogica
         | ID_ operadorAsignacion expresion
+        { SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
+          if (sim.tipo == T_ERROR) yyerror("Objeto no declarado");
+          else if (!(($3.tipo == T_ENTERO) || ($3.tipo == T_LOGICO)) &&
+                        ((sim.tipo == T_ENTERO) || (sim.tipo == T_LOGICO)) &&
+                        (sim.tipo == $3.tipo))
+                yyerror("Error de tipos en la 'asignacion'");
+          else $$.tipo = sim.tipo;
+        }
         | ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_ operadorAsignacion expresion
         ;
 
@@ -106,6 +164,10 @@ expresionRelacional: expresionAditiva
 
 expresionAditiva: expresionMultiplicativa
         | expresionAditiva operadorAditivo expresionMultiplicativa
+			{
+				if ($1.tipo == T_ENTERO && $2.tipo == T_ENTERO) $$.tipo = T_ENTERO;
+				else {yyerror ("Tipos no validos")
+			}
         ;
 
 expresionMultiplicativa: expresionUnaria
@@ -145,8 +207,8 @@ operadorRelacional: MAYOR_QUE_
         | MENOR_IGUAL_
         ;
 
-operadorAditivo: SUMA_
-        | RESTA_
+operadorAditivo: SUMA_ //{$$=1;}
+        | RESTA_ //{$$ = -1;}
         ;
 
 operadorMultiplicativo: MULT_
@@ -155,7 +217,7 @@ operadorMultiplicativo: MULT_
 
 operadorUnario: SUMA_
         | RESTA_
-        | NEGACION_
+        | NEGACION_ //{$$ = NOT;}
         ;
 
 operadorIncremento: INCREMENTO_
