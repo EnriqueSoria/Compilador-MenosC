@@ -25,8 +25,8 @@ comentario \/\/[^\n]*\n
 "read" {ECHO; return READ_;}
 "print" {ECHO; return PRINT_;}
 
-"true" {ECHO; return TRUE_;}
-"false" {ECHO; return FALSE_;}
+"true" {yylval.cent = 1; return TRUE_;}
+"false" {yylval.cent = 0; return FALSE_;}
 
 "+"  {ECHO; return SUMA_;}
 "-"  {ECHO; return RESTA_;}
@@ -62,10 +62,19 @@ comentario \/\/[^\n]*\n
 "}"  {ECHO; return CORCHETE_CERR_;}
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
-{integer} { ECHO; return CTE_;}
-{float} {ECHO; return CTE_;}
 
-{id}  {ECHO; return ID_;}
+{integer}	{ yylval.cent = atoi( yytext ); return CTE_;}
+
+{float}		{	yywarn( "Real truncado" );
+				yylval.cent = atoi( yytext );
+				return CTE_;
+			}
+
+{id}		{	if ( strlen( yytext ) > 14 ) yywarn( "Identificador excesivo" ); 
+				return ID_;
+			}
+
+.  		{yyerror("Caracter desconocido");}
 .  {yyerror("Caracter desconocido");}
 
 %%
