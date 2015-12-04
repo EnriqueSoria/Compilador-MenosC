@@ -1,21 +1,33 @@
 %{
 #include <stdio.h>
-#include <libtds.h>
+#include "../include/libtds.h"
+#include "../include/libgci.h"
+#include "../include/header.h"
 
-#include <header.h>
+void creaNombre(); void creaCentera(); void truncCreal();
+
+
 extern int yylineno;
 %}
 
 %union{
-        char* t_id;
-        int t_tipo;
-        int t_pos;
-        int t_op;
-        int t_uni;
+        char* ident; /* Nombre del ID */
+        int tipo; /* Tipo de la expresion */
+		int cent; /* Valor constante */
+        int pos;
+		int ident;
+        int op;	 /* Operacion */
+        int uni; /* Tipo del operador unario */
+
+		struct {
+			int tipo
+
+		}tipoYpos;
 }
 
 %token YYERROR_VERBOSE_
-%token ID_
+
+%token <ident> ID_
 %token FLOAT_
 %token WHILE_
 %token IF_
@@ -23,8 +35,8 @@ extern int yylineno;
 %token BOOL_
 %token READ_
 %token PRINT_
-%token TRUE_
-%token FALSE_
+%token <cent> TRUE_
+%token <cent> FALSE_
 %token SUMA_
 %token RESTA_
 %token MULT_
@@ -48,21 +60,30 @@ extern int yylineno;
 %token CLAUDATOR_AB_
 %token CLAUDATOR_CERR_
 %token PTOCOMA_
-%token CTE_
-%token NEGACION_
-%token INCREMENTO_
-%token DECREMENTO_
+%token <cent> CTE_
+%token <uni> NEGACION_
+%token <uni> INCREMENTO_
+%token <uni> DECREMENTO_
 
 
-%type <t_tipo> tipoSimple
-%type <t_tipo> operadorIncremento
-%type <t_tipo> operadorLogico
-%type <t_tipo> operadorIgualdad
-%type <t_op> operadorAditivo
-%type <t_op> operadorMultiplicativo
-%type <t_op> operadorAsignacion
-%type <t_op> operadorRelacional
-%type <t_uni> operadorUnario
+%type <tipoYpos> expresion
+%type <tipoYpos> expresionIgualdad
+%type <tipoYpos> expresionLogica
+%type <tipoYpos> expresionAditiva
+%type <tipoYpos> expresionMultiplicativa
+%type <tipoYpos> expresionUnaria
+%type <tipoYpos> expresionSufija
+
+
+%type <uni> operadorUnario
+%type <op> operadorAditivo
+%type <op> operadorMultiplicativo
+%type <op> operadorAsignacion
+%type <op> operadorRelacional
+%type <cent> operadorLogico
+%type <cent> tipoSimple
+%type <cent> operadorIncremento
+
 
 %%
 
@@ -78,7 +99,7 @@ sentencia: declaracion
         ;
 
 declaracion: tipoSimple ID_ PTOCOMA_ {
-                if (! insertarTSimpleTDS($2, $1, dvasr)){
+                if (! insertarTSimpleTDS($2, $1, dvar)){
                         yyerror ("Identificador repetido");
 					}
                 else {dvar += TALLA_TIPO_SIMPLE;}
@@ -166,7 +187,7 @@ expresionAditiva: expresionMultiplicativa
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
 				if ($1.tipo == T_ENTERO && $2.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-				else {yyerror ("Tipos no validos")
+				else {yyerror ("Tipos no validos")}
 			}
         ;
 
