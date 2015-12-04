@@ -14,10 +14,14 @@ extern FILE *yyin;
 extern int   yylineno;
 extern int   yydebug;
 extern char *yytext;
+extern int   yyleng;
 /********************* Variables externas definidas en el Programa Principal */
 extern int verbosidad;              /* Flag para saber si se desea una traza */
 extern int numErrores;              /* Contador del numero de errores        */
+extern int verTDS;                  /* Flag para saber si mostrar la TDS     */
 
+/***************************** Variables externas definidas en las librerias */
+extern int dvar;              /* Desplazamiento en el Segmento de Variables  */
 
 /********************************************************************************/
  /* Comprueba que el identificador no exceda la talla maxima (14) o lo trunca    */
