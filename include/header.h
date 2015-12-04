@@ -8,6 +8,7 @@
 /****************************************************** Constantes generales */
 #define TRUE  1
 #define FALSE 0
+#define TALLA_TIPO_SIMPLE     1
 /************************************* Variables externas definidas en el AL */
 extern FILE *yyin;
 extern int   yylineno;
@@ -16,6 +17,37 @@ extern char *yytext;
 /********************* Variables externas definidas en el Programa Principal */
 extern int verbosidad;              /* Flag para saber si se desea una traza */
 extern int numErrores;              /* Contador del numero de errores        */
+
+
+/********************************************************************************/
+ /* Comprueba que el identificador no exceda la talla maxima (14) o lo trunca    */
+void creaNombre(){
+
+	char *t;
+	if (yyleng > MAX_LENGTH) {
+		fprintf(stdout,"\nWarning at line %d: identificador truncado a longitud %d\n",
+		yylineno, MAX_LENGTH);
+		yyleng=MAX_LENGTH;
+		}
+	t = (char *)malloc(yyleng+1);
+	strncpy(t, yytext, yyleng);
+	t[yyleng] = '\0'; yylval.ident = t;
+}
+/********************************************************************************/
+/* Transforma una subcadena a la constante entera que representa                */
+void creaCentera(){
+	yylval.cent = atoi(yytext);
+	}
+/********************************************************************************/
+/* Transforma una subcadena a una constante entera truncandola.                 */
+void truncCreal(){
+	yylval.cent = atoi(yytext);
+	fprintf(stdout,"\nWarning at line %d: constante real truncada a entera %d\n",
+	yylineno,yylval.cent);
+}
+/********************************************************************************/
+
+
 
 #endif  /* _HEADER_H */
 /*****************************************************************************/
