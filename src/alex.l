@@ -70,7 +70,6 @@ comentario \/\/[^\n]*\n
 {id}		{creaNombre();return ID_;}
 
 .  		{yyerror("Caracter desconocido");}
-.  {yyerror("Caracter desconocido");}
 
 %%
 
