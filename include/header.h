@@ -17,7 +17,6 @@ extern int   yydebug;
 extern char *yytext;
 extern int   yyleng;
 extern int   yylval;
-
 /********************* Variables externas definidas en el Programa Principal */
 extern int verbosidad;              /* Flag para saber si se desea una traza */
 extern int numErrores;              /* Contador del numero de errores        */
@@ -28,39 +27,14 @@ extern int dvar;              /* Desplazamiento en el Segmento de Variables  */
 
 /********************************************************************************/
  /* Comprueba que el identificador no exceda la talla maxima (14) o lo trunca    */
-
-void creaNombre(){
-
-	char *t;
-	if (yyleng > MAX_LENGTH) {
-		fprintf(stdout,"\nWarning at line %d: identificador truncado a longitud %d\n",
-		yylineno, MAX_LENGTH);
-		yyleng=MAX_LENGTH;
-		}
-	t = (char *)malloc(yyleng+1);
-	strncpy(t, yytext, yyleng);
-	t[yyleng] = '\0'; yylval.ident = t;
-}
+void creaNombre();
 /********************************************************************************/
 /* Transforma una subcadena a la constante entera que representa                */
-void creaCentera(){
-	yylval.cent = atoi(yytext);
-	}
+void creaCentera();
 /********************************************************************************/
 /* Transforma una subcadena a una constante entera truncandola.                 */
-void truncCreal(){
-	yylval.cent = atoi(yytext);
-	fprintf(stdout,"\nWarning at line %d: constante real truncada a entera %d\n",
-	yylineno,yylval.cent);
-}
+void truncCreal();
 /********************************************************************************/
-
-
-
-
-
-
-
 
 #endif  /* _HEADER_H */
 /*****************************************************************************/

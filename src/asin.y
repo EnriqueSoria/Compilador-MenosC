@@ -7,20 +7,19 @@
 %}
 
 %union{
-        char* ident; /* Nombre del ID */
-        int tipo; /* Tipo de la expresion */
-		    int cent; /* Valor constante */
+      char* ident; /* Nombre del ID */
+      int tipo; /* Tipo de la expresion */
+		  int cent; /* Valor constante */
+      int pos;
+      int op;	 /* Operacion */
+      int uni; /* Tipo del operador unario */
+      struct {
+        int tipo;
         int pos;
-        int op;	 /* Operacion */
-        int uni; /* Tipo del operador unario */
-
-    struct {
-			int tipo;
-		}tipoYpos;
+      }tipoYpos;
 }
 
 %token YYERROR_VERBOSE_
-
 %token <ident> ID_
 %token FLOAT_
 %token WHILE_
@@ -181,7 +180,7 @@ expresionAditiva: expresionMultiplicativa
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
 				if ($1.tipo == T_ENTERO && $2.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-				else {yyerror ("Tipos no validos")}
+				else {yyerror ("Tipos no validos");}
 			}
         ;
 

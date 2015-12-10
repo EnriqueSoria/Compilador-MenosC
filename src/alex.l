@@ -9,7 +9,6 @@
 
 digito [0-9]
 letra [A-Za-z]
-
 integer {digito}+
 float ({digito}+)\.{digito}+
 id {letra}({letra}|{digito})*
@@ -65,19 +64,41 @@ comentario \/\/[^\n]*\n
 "["  {ECHO; return CLAUDATOR_AB_;}
 "]"  {ECHO; return CLAUDATOR_CERR_;}
 
-{integer}	{ creaCentera(); return CTE_;}
+{integer}	{ creaCentera(); return(CTE_);}
 
 {float}		{	truncCreal();
-				return CTE_;
+				return(CTE_);
 			}
 
 {id}		{	creaNombre();
-				return ID_;
+				return(ID_);
 			}
 
 .  		{yyerror("Caracter desconocido");}
 
 %%
+
+void creaNombre(){
+  char *t;
+  if (yyleng > MAX_LENGTH) {
+    fprintf(stdout,"\nWarning at line %d: identificador truncado a longitud %d\n",
+    yylineno, MAX_LENGTH);
+    yyleng=MAX_LENGTH;
+    }
+  t = (char *)malloc(yyleng+1);
+  strncpy(t, yytext, yyleng);
+  t[yyleng] = '\0'; yylval.ident = t;
+}
+
+void creaCentera(){
+  	yylval.cent = atoi(yytext);
+}
+
+void truncCreal(){
+  yylval.cent = atoi(yytext);
+  fprintf(stdout,"\nWarning at line %d: constante real truncada a entera %d\n",
+  yylineno,yylval.cent);
+}
 
 
 int main (int argc, char *argv[]) {
