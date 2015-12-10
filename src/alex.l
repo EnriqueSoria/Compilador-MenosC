@@ -99,13 +99,3 @@ void truncCreal(){
   fprintf(stdout,"\nWarning at line %d: constante real truncada a entera %d\n",
   yylineno,yylval.cent);
 }
-
-
-int main (int argc, char *argv[]) {
-  if ( (yyin=fopen(argv[1], "r")) == NULL ) {
-    fprintf( stderr, "Fichero no valido %s", argv[1]);
-  }
-  yyparse();
-
-  return 0;
-}

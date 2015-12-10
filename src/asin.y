@@ -240,6 +240,3 @@ operadorIncremento: INCREMENTO_
 
 %%
 /* Llamada por yyparse ante un error */
-yyerror (char *s){
-        printf ("\nLinea %d: %s\n", yylineno, s);
-}
