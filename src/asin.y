@@ -123,7 +123,7 @@ listaInstrucciones:
         | listaInstrucciones instruccion
         ;
 
-instruccionExpresion: expresion PTOCOMA_{ if ($1.tipo = T_LOGICO) yyerror ("Tipo no valido"); }
+instruccionExpresion: expresion PTOCOMA_{ if ($1.tipo == T_LOGICO) yyerror ("Tipo no valido"); }
         | PTOCOMA_
         ;
 
@@ -135,8 +135,8 @@ instruccionEntradaSalida: READ_ PARENTESIS_AB_ ID_ PARENTESIS_CERR_ PTOCOMA_
                             }
 
         | PRINT_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ PTOCOMA_
-            {    SIMB s = obtenerTDS($3);
-                if(s.tipo!=T_ENTERO || s.tipo!= T_BOOL) yyerror("Tipo no valido");
+            {
+                if($3.tipo != T_ENTERO || $3.tipo != T_LOGICO) yyerror("Tipo no valido");
 
             }
         ;
@@ -179,7 +179,7 @@ expresionRelacional: expresionAditiva
 expresionAditiva: expresionMultiplicativa
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
-				if ($1.tipo == T_ENTERO && $2.tipo == T_ENTERO) $$.tipo = T_ENTERO;
+				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO) $$.tipo = T_ENTERO;
 				else {yyerror ("Tipos no validos");}
 			}
         ;
