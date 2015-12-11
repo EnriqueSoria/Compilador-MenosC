@@ -214,7 +214,7 @@ expresionMultiplicativa: expresionUnaria
 			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
 					$$.tipo = T_ENTERO;}
 			else{	yyerror ("Tipos no validos");
-              		$$.tipo = T_ERROR;
+              			$$.tipo = T_ERROR;
 				}
 			}
         ;
