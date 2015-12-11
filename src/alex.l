@@ -16,53 +16,53 @@ delimitador [ \t\n]+
 comentario \/\/[^\n]*\n
 %%
 
-"while" {ECHO; return WHILE_;}
-"if"  {ECHO; return IF_;}
-"else" {ECHO; return ELSE_;}
+"while" { return WHILE_;}
+"if"  { return IF_;}
+"else" { return ELSE_;}
 
-"int"  {ECHO; return INT_;}
-"bool" {ECHO; return BOOL_;}
+"int"  { return INT_;}
+"bool" { return BOOL_;}
 
-"read" {ECHO; return READ_;}
-"print" {ECHO; return PRINT_;}
+"read" { return READ_;}
+"print" { return PRINT_;}
 
 "true" {yylval.cent = 1; return TRUE_;}
 "false" {yylval.cent = 0; return FALSE_;}
 
-"+"  {ECHO; return SUMA_;}
-"-"  {ECHO; return RESTA_;}
-"*"  {ECHO; return MULT_;}
-"/"  {ECHO; return DIV_;}
+"+"  { return SUMA_;}
+"-"  { return RESTA_;}
+"*"  { return MULT_;}
+"/"  { return DIV_;}
 
-"="  {ECHO; return ASIGNACION_;}
-"+="  {ECHO; return MASIGUAL_;}
-"-="  {ECHO; return MENOSIGUAL_;}
-"++"  {ECHO; return INCREMENTO_;}
-"--"  {ECHO; return DECREMENTO_;}
-
-
-"=="  {ECHO; return IGUALDAD_;}
-"!="  {ECHO; return DESIGUAL_;}
-"!"   {ECHO; return NEGACION_;}
-"&&"  {ECHO; return COMPARADOR_AND_;}
-"||"  {ECHO; return COMPARADOR_OR_;}
-"<="  {ECHO; return MENOR_IGUAL_;}
-">="  {ECHO; return MAYOR_IGUAL_;}
-"<"   {ECHO; return MENOR_QUE_;}
-">"   {ECHO; return MAYOR_QUE_;}
+"="  { return ASIGNACION_;}
+"+="  { return MASIGUAL_;}
+"-="  { return MENOSIGUAL_;}
+"++"  { return INCREMENTO_;}
+"--"  { return DECREMENTO_;}
 
 
-{comentario}  {ECHO;}
-{delimitador}  {ECHO;}
-";" {ECHO; return PTOCOMA_; }
+"=="  { return IGUALDAD_;}
+"!="  { return DESIGUAL_;}
+"!"   { return NEGACION_;}
+"&&"  { return COMPARADOR_AND_;}
+"||"  { return COMPARADOR_OR_;}
+"<="  { return MENOR_IGUAL_;}
+">="  { return MAYOR_IGUAL_;}
+"<"   { return MENOR_QUE_;}
+">"   { return MAYOR_QUE_;}
 
 
-"("  {ECHO; return PARENTESIS_AB_;}
-")"  {ECHO; return PARENTESIS_CERR_;}
-"{"  {ECHO; return CORCHETE_AB_;}
-"}"  {ECHO; return CORCHETE_CERR_;}
-"["  {ECHO; return CLAUDATOR_AB_;}
-"]"  {ECHO; return CLAUDATOR_CERR_;}
+{comentario}  {}
+{delimitador}  {}
+";" { return PTOCOMA_; }
+
+
+"("  { return PARENTESIS_AB_;}
+")"  { return PARENTESIS_CERR_;}
+"{"  { return CORCHETE_AB_;}
+"}"  { return CORCHETE_CERR_;}
+"["  { return CLAUDATOR_AB_;}
+"]"  { return CLAUDATOR_CERR_;}
 
 {integer}	{ creaCentera(); return(CTE_);}
 
@@ -98,14 +98,4 @@ void truncCreal(){
   yylval.cent = atoi(yytext);
   fprintf(stdout,"\nWarning at line %d: constante real truncada a entera %d\n",
   yylineno,yylval.cent);
-}
-
-
-int main (int argc, char *argv[]) {
-  if ( (yyin=fopen(argv[1], "r")) == NULL ) {
-    fprintf( stderr, "Fichero no valido %s", argv[1]);
-  }
-  yyparse();
-
-  return 0;
 }

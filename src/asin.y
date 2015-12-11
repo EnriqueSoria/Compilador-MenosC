@@ -66,7 +66,7 @@
 %type <tipoYpos> expresionMultiplicativa
 %type <tipoYpos> expresionUnaria
 %type <tipoYpos> expresionSufija
-
+%type <tipoYpos> expresionRelacional
 
 %type <uni> operadorUnario
 %type <op> operadorAditivo
@@ -152,6 +152,7 @@ instruccionIteracion: WHILE_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instrucci
         ;
 
 expresion: expresionLogica
+          {$$.tipo = $1.tipo;}
         | ID_ operadorAsignacion expresion
         { SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
           if (sim.tipo == T_ERROR) yyerror("Objeto no declarado");
@@ -162,25 +163,45 @@ expresion: expresionLogica
           else $$.tipo = sim.tipo;
         }
         | ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_ operadorAsignacion expresion
+
         ;
 
 expresionLogica: expresionIgualdad
+        {$$.tipo = $1.tipo;}
         | expresionLogica operadorLogico expresionIgualdad
         ;
 
 expresionIgualdad: expresionRelacional
+        {
+          $$.tipo = $1.tipo
+        }
 	| expresionIgualdad operadorIgualdad expresionRelacional
+    {
+      printf("Soy una expresion");
+    }
         ;
 
 expresionRelacional: expresionAditiva
+              {
+                $$.tipo = $1.tipo;
+              }
         | expresionRelacional operadorRelacional expresionAditiva
+        {
+          if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO){
+            yyerror("No se pueden comparar objetos de tipos diferentes");
+            $$.tipo = T_ERROR;
+          }
+          else{$$.tipo = T_LOGICO;}
+        }
         ;
 
 expresionAditiva: expresionMultiplicativa
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
 				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-				else {yyerror ("Tipos no validos");}
+				else {yyerror ("Tipos no validos");
+              $$.tipo = T_ERROR;
+      }
 			}
         ;
 
@@ -195,11 +216,13 @@ expresionUnaria: expresionSufija
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
         | PARENTESIS_AB_ expresion PARENTESIS_CERR_
-        | ID_
+        | ID_ { SIMB sim = obtenerTDS($1);
+                $$.tipo = sim.tipo;
+        }
         | ID_ operadorIncremento
-        | CTE_
-        | TRUE_
-        | FALSE_
+        | CTE_ {$$.tipo = T_ENTERO}
+        | TRUE_ {$$.tipo = T_LOGICO}
+        | FALSE_ {$$.tipo = T_LOGICO}
         ;
 
 operadorAsignacion: ASIGNACION_
@@ -221,8 +244,8 @@ operadorRelacional: MAYOR_QUE_
         | MENOR_IGUAL_
         ;
 
-operadorAditivo: SUMA_ //{$$=1;}
-        | RESTA_ //{$$ = -1;}
+operadorAditivo: SUMA_
+        | RESTA_
         ;
 
 operadorMultiplicativo: MULT_
@@ -231,7 +254,7 @@ operadorMultiplicativo: MULT_
 
 operadorUnario: SUMA_
         | RESTA_
-        | NEGACION_ //{$$ = NOT;}
+        | NEGACION_
         ;
 
 operadorIncremento: INCREMENTO_
@@ -239,7 +262,3 @@ operadorIncremento: INCREMENTO_
         ;
 
 %%
-/* Llamada por yyparse ante un error */
-yyerror (char *s){
-        printf ("\nLinea %d: %s\n", yylineno, s);
-}
