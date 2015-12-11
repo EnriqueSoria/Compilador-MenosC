@@ -286,7 +286,4 @@ operadorIncremento: INCREMENTO_
         ;
 
 %%
-<<<<<<< HEAD
-=======
-/* Llamada por yyparse ante un error */
->>>>>>> 734dd18db6239d2e7b000c89572cac05ba06aee6
+
