@@ -208,7 +208,7 @@ expresionAditiva: expresionMultiplicativa
 expresionMultiplicativa: expresionUnaria
 						{
                           $$.tipo = $1.tipo;
-                          $$.pos  = $1.pos;
+                         
                          } |
         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
 			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
@@ -222,7 +222,7 @@ expresionMultiplicativa: expresionUnaria
 expresionUnaria: expresionSufija
 				{
                   $$.tipo = $1.tipo;
-                  $$.pos  = $1.pos;
+
                 }
         | operadorUnario expresionUnaria{
 			if($1 == NEGACION_){
