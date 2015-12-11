@@ -206,12 +206,36 @@ expresionAditiva: expresionMultiplicativa
         ;
 
 expresionMultiplicativa: expresionUnaria
+						{
+                          $$.tipo = $1.tipo;
+                          $$.pos  = $1.pos;
+                         } |
         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
+			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
+					$$.tipo = T_ENTERO;}
+			else{	yyerror ("Tipos no validos");
+              		$$.tipo = T_ERROR;
+				}
+			}
         ;
 
 expresionUnaria: expresionSufija
-        | operadorUnario expresionUnaria
-        | operadorIncremento ID_
+				{
+                  $$.tipo = $1.tipo;
+                  $$.pos  = $1.pos;
+                }
+        | operadorUnario expresionUnaria{
+			if($1 == NEGACION_){
+				if($2.tipo == T_LOGICO) $$.tipo = T_LOGICO;
+				else $$.tipo = T_ERROR;
+			}
+		}
+
+        | operadorIncremento ID_{
+			SIMB id = obtenerTDS( $2 );
+			if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
+			else  $$.tipo = T_ERROR;
+		}
         ;
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
@@ -254,7 +278,7 @@ operadorMultiplicativo: MULT_
 
 operadorUnario: SUMA_
         | RESTA_
-        | NEGACION_
+        | NEGACION_	{ $$ = NEGACION_; }
         ;
 
 operadorIncremento: INCREMENTO_
