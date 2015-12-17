@@ -67,7 +67,9 @@
 %type <tipoYpos> expresionUnaria
 %type <tipoYpos> expresionSufija
 %type <tipoYpos> expresionRelacional
-
+%type <tipoYpos> instruccionIteracion
+%type <tipoYpos> instruccionExpresion
+%type <tipoYpos> instruccionSeleccion
 %type <uni> operadorUnario
 %type <op> operadorAditivo
 %type <op> operadorMultiplicativo
@@ -81,6 +83,8 @@
 %%
 
 programa: CORCHETE_AB_ secuenciaSentencias CORCHETE_CERR_
+        {if(verTDS) mostrarTDS();
+        }
         ;
 
 secuenciaSentencias: sentencia
@@ -110,7 +114,8 @@ declaracion: tipoSimple ID_ PTOCOMA_ {
         };
 
 tipoSimple: INT_ { $$ = T_ENTERO; }
-        | BOOL_ { $$ = T_LOGICO; };
+        | BOOL_ { $$ = T_LOGICO; }
+        ;
 
 instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
         | instruccionExpresion
@@ -122,63 +127,98 @@ instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
 listaInstrucciones:
         | listaInstrucciones instruccion
         ;
-
-instruccionExpresion: expresion PTOCOMA_{ if ($1.tipo == T_LOGICO) yyerror ("Tipo no valido"); }
+instruccionExpresion: expresion PTOCOMA_{ $$.tipo = $1.tipo;  }
         | PTOCOMA_
         ;
 
 
 instruccionEntradaSalida: READ_ PARENTESIS_AB_ ID_ PARENTESIS_CERR_ PTOCOMA_
                             {    SIMB s = obtenerTDS($3);
-                                if(s.tipo!=T_ENTERO || s.tipo != T_LOGICO) yyerror("Tipo no valido");
+                                if(s.tipo!=T_ENTERO) yyerror("El argumento de read debe ser Entero");
 
                             }
 
         | PRINT_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ PTOCOMA_
             {
-                if($3.tipo != T_ENTERO || $3.tipo != T_LOGICO) yyerror("Tipo no valido");
+                if($3.tipo != T_ENTERO) yyerror("La expresion del 'print' debe ser 'entera'");
 
             }
         ;
 
 instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_
-                        { if($3.tipo != T_LOGICO) yyerror("Tipo no valido");}
+                        { if($3.tipo == T_ERROR){
+                          $$.tipo = T_ERROR;
+                        }else{
+                          $$.tipo = T_LOGICO;
+                        }
+
+                      }
 
 
 instruccion ELSE_ instruccion
+
         ;
 instruccionIteracion: WHILE_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion
-                    { if($3.tipo != T_LOGICO) yyerror("Tipo no valido");}
+                    { if($3.tipo != T_LOGICO) yyerror("La expresion de While debe de ser Logica");
+                      else $$.tipo = $3.tipo;
+                  }
         ;
 
 expresion: expresionLogica
-          {$$.tipo = $1.tipo;}
+          {$$.tipo = $1.tipo; }
         | ID_ operadorAsignacion expresion
-        { SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
+        { if($3.tipo == T_ERROR){
+           $$.tipo = T_ERROR;
+        }else{
+          SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
           if (sim.tipo == T_ERROR) yyerror("Objeto no declarado");
-          else if (!(($3.tipo == T_ENTERO) || ($3.tipo == T_LOGICO)) &&
+          else{if ((($3.tipo == T_ENTERO) || ($3.tipo == T_LOGICO)) &&
                         ((sim.tipo == T_ENTERO) || (sim.tipo == T_LOGICO)) &&
                         (sim.tipo == $3.tipo))
-                yyerror("Error de tipos en la 'asignacion'");
-          else $$.tipo = sim.tipo;
+                        {
+                          $$.tipo = sim.tipo;}
+                        else yyerror("Error en la asignacion");
+          }
+        }
         }
         | ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_ operadorAsignacion expresion
+          {
+            if($6.tipo == T_ERROR){$$.tipo = T_ERROR;}
+            else{
+            SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
+            if(sim.tipo == T_ERROR) yyerror("Objeto no declarado");
+            else {
+              if(sim.tipo != T_ARRAY) yyerror("La variable debe de ser T_ARRAY");
+              else {
+                if($3.tipo != T_ENTERO) yyerror("Error en el indice de la array");
+                else{
+                  if(sim.telem != $6.tipo) yyerror("Error en el tipo de la asignacion");
+                }
+                }
+              }
 
+            }
+            }
         ;
 
 expresionLogica: expresionIgualdad
         {$$.tipo = $1.tipo;}
         | expresionLogica operadorLogico expresionIgualdad
+          {$$.tipo = T_ERROR;
+
+           if($1.tipo == T_LOGICO && $3.tipo == T_LOGICO){
+             $$.tipo = $1.tipo;
+           }else{ yyerror("Error en el operador Logico");}
+
+         }
         ;
 
 expresionIgualdad: expresionRelacional
         {
-          $$.tipo = $1.tipo
+          $$.tipo = $1.tipo;
         }
 	| expresionIgualdad operadorIgualdad expresionRelacional
-    {
-      printf("Soy una expresion");
-    }
+      {}
         ;
 
 expresionRelacional: expresionAditiva
@@ -187,19 +227,23 @@ expresionRelacional: expresionAditiva
               }
         | expresionRelacional operadorRelacional expresionAditiva
         {
+
           if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO){
             yyerror("No se pueden comparar objetos de tipos diferentes");
             $$.tipo = T_ERROR;
           }
           else{$$.tipo = T_LOGICO;}
         }
+
         ;
 
 expresionAditiva: expresionMultiplicativa
+            {$$.tipo = $1.tipo;
+            }
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
 				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-				else {yyerror ("Tipos no validos");
+				else {yyerror ("Tipos no validos 229");
               $$.tipo = T_ERROR;
       }
 			}
@@ -207,13 +251,12 @@ expresionAditiva: expresionMultiplicativa
 
 expresionMultiplicativa: expresionUnaria
 						{
-                          $$.tipo = $1.tipo;
-                         
-                         } |
+                $$.tipo = $1.tipo;
+            }
         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
 			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
 					$$.tipo = T_ENTERO;}
-			else{	yyerror ("Tipos no validos");
+			else{	yyerror ("Error en expresion multiplicativa");
               			$$.tipo = T_ERROR;
 				}
 			}
@@ -221,29 +264,41 @@ expresionMultiplicativa: expresionUnaria
 
 expresionUnaria: expresionSufija
 				{
-                  $$.tipo = $1.tipo;
+            $$.tipo = $1.tipo;
+          }
+        | operadorUnario expresionUnaria
+          {
+            if($2.tipo != T_LOGICO){
+              $$.tipo = T_ERROR;
+              yyerror("Error en expresionUnaria");
+            }
 
-                }
-        | operadorUnario expresionUnaria{
-			if($1 == NEGACION_){
-				if($2.tipo == T_LOGICO) $$.tipo = T_LOGICO;
-				else $$.tipo = T_ERROR;
-			}
-		}
+        }
 
         | operadorIncremento ID_{
-			SIMB id = obtenerTDS( $2 );
-			if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-			else  $$.tipo = T_ERROR;
-		}
+			      SIMB id = obtenerTDS( $2 );
+			      if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
+			      else  $$.tipo = T_ERROR;
+		               }
         ;
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
+        {
+          $$.tipo = T_ERROR; SIMB sim = obtenerTDS($1);
+          if(sim.telem == T_ENTERO ) $$.tipo = T_ENTERO;
+          if(sim.telem == T_LOGICO) $$.tipo = T_LOGICO;
+        }
         | PARENTESIS_AB_ expresion PARENTESIS_CERR_
+        {
+          $$.tipo = $2.tipo;
+        }
         | ID_ { SIMB sim = obtenerTDS($1);
                 $$.tipo = sim.tipo;
         }
-        | ID_ operadorIncremento
+        | ID_ operadorIncremento {SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
+                                    if(sim.tipo == T_ENTERO){$$.tipo = T_ENTERO;}
+
+        }
         | CTE_ {$$.tipo = T_ENTERO}
         | TRUE_ {$$.tipo = T_LOGICO}
         | FALSE_ {$$.tipo = T_LOGICO}
@@ -278,7 +333,7 @@ operadorMultiplicativo: MULT_
 
 operadorUnario: SUMA_
         | RESTA_
-        | NEGACION_	{ $$ = NEGACION_; }
+        | NEGACION_
         ;
 
 operadorIncremento: INCREMENTO_
@@ -286,4 +341,3 @@ operadorIncremento: INCREMENTO_
         ;
 
 %%
-

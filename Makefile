@@ -4,7 +4,7 @@
 #                         Jose Miguel Benedi, 2015-2016 <jbenedi@dsic.upv.es> #
 ###############################################################################
 CC_OPTIONS = -pedantic
-CC_LIBRARY = -lfl -ltds
+CC_LIBRARY = -ll -ltds
 CC_LINKS_FLAGS = $(CC_LIBRARY) $(CC_OPTIONS)
 OBJECTS = ./alex.o  ./asin.o ./principal.o
 

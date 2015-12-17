@@ -3,6 +3,7 @@
   #include <string.h>
   #include "header.h"
   #include "asin.h"
+  #define  devolver(x) if (verbosidad) ECHO; return x;
 %}
 
 %option yylineno
@@ -16,62 +17,62 @@ delimitador [ \t\n]+
 comentario \/\/[^\n]*\n
 %%
 
-"while" { return WHILE_;}
-"if"  { return IF_;}
-"else" { return ELSE_;}
+"while" { devolver( WHILE_);}
+"if"  { devolver( IF_);}
+"else" { devolver( ELSE_);}
 
-"int"  { return INT_;}
-"bool" { return BOOL_;}
+"int"  { devolver( INT_);}
+"bool" { devolver( BOOL_);}
 
-"read" { return READ_;}
-"print" { return PRINT_;}
+"read" { devolver( READ_);}
+"print" { devolver( PRINT_);}
 
-"true" {yylval.cent = 1; return TRUE_;}
-"false" {yylval.cent = 0; return FALSE_;}
+"true" {yylval.cent = 1; devolver( TRUE_);}
+"false" {yylval.cent = 0; devolver( FALSE_);}
 
-"+"  { return SUMA_;}
-"-"  { return RESTA_;}
-"*"  { return MULT_;}
-"/"  { return DIV_;}
+"+"  { devolver( SUMA_);}
+"-"  { devolver( RESTA_);}
+"*"  { devolver( MULT_);}
+"/"  { devolver( DIV_);}
 
-"="  { return ASIGNACION_;}
-"+="  { return MASIGUAL_;}
-"-="  { return MENOSIGUAL_;}
-"++"  { return INCREMENTO_;}
-"--"  { return DECREMENTO_;}
+"="  { devolver( ASIGNACION_);}
+"+="  { devolver( MASIGUAL_);}
+"-="  { devolver( MENOSIGUAL_);}
+"++"  { devolver( INCREMENTO_);}
+"--"  { devolver( DECREMENTO_);}
 
 
-"=="  { return IGUALDAD_;}
-"!="  { return DESIGUAL_;}
-"!"   { return NEGACION_;}
-"&&"  { return COMPARADOR_AND_;}
-"||"  { return COMPARADOR_OR_;}
-"<="  { return MENOR_IGUAL_;}
-">="  { return MAYOR_IGUAL_;}
-"<"   { return MENOR_QUE_;}
-">"   { return MAYOR_QUE_;}
+"=="  { devolver( IGUALDAD_);}
+"!="  { devolver( DESIGUAL_);}
+"!"   { devolver( NEGACION_);}
+"&&"  { devolver( COMPARADOR_AND_);}
+"||"  { devolver( COMPARADOR_OR_);}
+"<="  { devolver( MENOR_IGUAL_);}
+">="  { devolver( MAYOR_IGUAL_);}
+"<"   { devolver( MENOR_QUE_);}
+">"   { devolver( MAYOR_QUE_);}
 
 
 {comentario}  {}
-{delimitador}  {}
-";" { return PTOCOMA_; }
+{delimitador}  {if (verbosidad) ECHO;}
+";" { devolver( PTOCOMA_); }
 
 
-"("  { return PARENTESIS_AB_;}
-")"  { return PARENTESIS_CERR_;}
-"{"  { return CORCHETE_AB_;}
-"}"  { return CORCHETE_CERR_;}
-"["  { return CLAUDATOR_AB_;}
-"]"  { return CLAUDATOR_CERR_;}
+"("  { devolver( PARENTESIS_AB_);}
+")"  { devolver( PARENTESIS_CERR_);}
+"{"  { devolver( CORCHETE_AB_);}
+"}"  { devolver( CORCHETE_CERR_);}
+"["  { devolver( CLAUDATOR_AB_);}
+"]"  { devolver( CLAUDATOR_CERR_);}
 
-{integer}	{ creaCentera(); return(CTE_);}
+{integer}	{ creaCentera(); devolver((CTE_));}
 
 {float}		{	truncCreal();
-				return(CTE_);
+				devolver(CTE_);
 			}
 
 {id}		{	creaNombre();
-				return(ID_);
+				devolver(ID_);
 			}
 
 .  		{yyerror("Caracter desconocido");}

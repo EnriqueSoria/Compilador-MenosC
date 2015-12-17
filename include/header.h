@@ -20,8 +20,8 @@ extern char *yytext;
 /********************* Variables externas definidas en el Programa Principal */
 extern int verbosidad;              /* Flag para saber si se desea una traza */
 extern int numErrores;              /* Contador del numero de errores        */
-extern int verTDS;                  /* Flag para saber si mostrar la TDS     */
-
+//extern int verTDS;                 /* Flag para saber si mostrar la TDS     */
+int verTDS;
 /***************************** Variables externas definidas en las librerias */
 extern int dvar;              /* Desplazamiento en el Segmento de Variables  */
 
