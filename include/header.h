@@ -10,6 +10,27 @@
 #define FALSE 0
 #define TALLA_TIPO_SIMPLE     1
 #define MAX_LENGTH 14
+#define noop ((void)0)
+#define OPASIGN 1
+#define OPASIGNS 2
+#define OPASIGND 3
+#define OPAND 4
+#define OPOR 5
+#define OPIGUAL 6
+#define OPDIST 7
+#define OPMAYQ 8
+#define OPMENQ 9
+#define OPMAYEQ 10
+#define OPMENEQ 11
+#define OPSUM 12
+#define OPDIF 13
+#define OPMULT 14
+#define OPDIVI 15
+#define OPPOS 16
+#define OPNEG 17
+#define OPNOT 18
+#define OPMASMAS 19
+#define OPMENMEN 20
 /************************************* Variables externas definidas en el AL */
 extern FILE *yyin;
 extern int   yylineno;

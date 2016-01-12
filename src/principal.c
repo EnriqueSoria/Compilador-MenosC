@@ -19,6 +19,7 @@ void yyerror(const char * msg)
 int main (int argc, char **argv)
 /* Gestiona la linea de comandos e invoca al analizador sintactico-semantico.*/
 {
+        char *n_file;
         int i, n = 0;
         verTDS = 0;
         for (i=0; i<argc; ++i) {
@@ -31,9 +32,12 @@ int main (int argc, char **argv)
                         fprintf (stderr, "Fichero no valido %s\n", argv[argc]);
                 else {
                         if (verbosidad == TRUE) fprintf(stdout,"%3d.- ", yylineno);
+                        n_file = argv[argc];
                         yyparse ();
                         if (numErrores > 0)
                                 fprintf(stdout,"\nNumero de errores:      %d\n", numErrores);
+                        else
+                          volcarCodigo(n_file);
                 }
         }
         else fprintf (stderr, "Uso: cmc [-v] [-t] fichero\n");

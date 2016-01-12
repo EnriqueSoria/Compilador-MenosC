@@ -75,6 +75,7 @@
 %type <op> operadorMultiplicativo
 %type <op> operadorAsignacion
 %type <op> operadorRelacional
+%type <op> operadorIgualdad
 %type <cent> operadorLogico
 %type <cent> tipoSimple
 %type <cent> operadorIncremento
@@ -83,8 +84,11 @@
 %%
 
 programa: CORCHETE_AB_ secuenciaSentencias CORCHETE_CERR_
-        {if(verTDS) mostrarTDS();
+        {
+          if(verTDS) mostrarTDS();
+          emite( FIN, crArgNul(), crArgNul(), crArgNul());
         }
+        | CORCHETE_AB_ CORCHETE_CERR_
         ;
 
 secuenciaSentencias: sentencia
@@ -100,8 +104,8 @@ declaracion: tipoSimple ID_ PTOCOMA_ {
                         yyerror ("Identificador repetido");
 					}
                 else {dvar += TALLA_TIPO_SIMPLE;}
-        }|
-        tipoSimple ID_ CLAUDATOR_AB_ CTE_ CLAUDATOR_CERR_ PTOCOMA_ {
+        }
+        | tipoSimple ID_ CLAUDATOR_AB_ CTE_ CLAUDATOR_CERR_ PTOCOMA_ {
                 int numelem = $4;
                 if ($4 <= 0){
                         yyerror("Talla inapropiada");
@@ -127,45 +131,69 @@ instruccion: CORCHETE_AB_ listaInstrucciones CORCHETE_CERR_
 listaInstrucciones:
         | listaInstrucciones instruccion
         ;
-instruccionExpresion: expresion PTOCOMA_{ $$.tipo = $1.tipo;  }
+instruccionExpresion: expresion PTOCOMA_
+{ $$.tipo = $1.tipo;
+  $$.pos = $1.pos;  }
         | PTOCOMA_
         ;
 
 
 instruccionEntradaSalida: READ_ PARENTESIS_AB_ ID_ PARENTESIS_CERR_ PTOCOMA_
                             {    SIMB s = obtenerTDS($3);
-                                if(s.tipo!=T_ENTERO) yyerror("El argumento de read debe ser Entero");
-
+                                if(s.tipo!=T_ENTERO)
+                                  yyerror("El argumento de read debe ser Entero");
+                                else
+                                  emite(EREAD, crArgNul(), crArgNul(), crArgPos(s.desp));
                             }
 
         | PRINT_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ PTOCOMA_
             {
                 if($3.tipo != T_ENTERO) yyerror("La expresion del 'print' debe ser 'entera'");
-
+                emite(EWRITE, crArgNul(), crArgNul(), crArgPos($3.pos));
             }
         ;
 
 instruccionSeleccion: IF_ PARENTESIS_AB_ expresion PARENTESIS_CERR_
-                        { if($3.tipo == T_ERROR){
-                          $$.tipo = T_ERROR;
-                        }else{
-                          $$.tipo = T_LOGICO;
+                        {
+                          if($3.tipo == T_ERROR || $3.tipo != T_LOGICO) yyerror("La expresion de IF debe de ser de tipo logico");
+                          $<cent>$ = creaLans(si);
+                          emite(EIGUAL, crArgPos($3.pos), crArgEnt(0), crArgNul());
                         }
+                        instruccion
+                        {
+                          $<cent>$ = creaLans(si);
+                          emite(GOTOS, crArgNul(), crArgNul(), crArgNul());
+                          completaLans($<cent>5, crArgEtq(si));
+                        }
+                        ELSE_ instruccion
+                        {
+                            completaLans($<cent>7, crArgEtq(si));
 
-                      }
-
-
-instruccion ELSE_ instruccion
-
+                        }
         ;
-instruccionIteracion: WHILE_ PARENTESIS_AB_ expresion PARENTESIS_CERR_ instruccion
-                    { if($3.tipo != T_LOGICO) yyerror("La expresion de While debe de ser Logica");
-                      else $$.tipo = $3.tipo;
+instruccionIteracion: WHILE_{
+                      $<cent>$ = si;
+                      }
+                    PARENTESIS_AB_ expresion PARENTESIS_CERR_
+                    { if($4.tipo != T_LOGICO) yyerror("La expresion de While debe de ser Logica");
+                      else{
+                        //$$.tipo = $4.tipo;
+                        $<cent>$ = creaLans(si);
+                        emite(EIGUAL, crArgPos($4.pos), crArgEnt(0), crArgNul());
+                      }
+                    }
+                    instruccion
+                    {
+                    emite(GOTOS, crArgNul(), crArgNul(), crArgEtq($<cent>2));
+                    completaLans($<cent>6, crArgEtq(si));
                   }
         ;
 
 expresion: expresionLogica
-          {$$.tipo = $1.tipo; }
+          {$$.tipo = $1.tipo;
+           $$.pos = $1.pos;
+
+            }
         | ID_ operadorAsignacion expresion
         { if($3.tipo == T_ERROR){
            $$.tipo = T_ERROR;
@@ -176,7 +204,20 @@ expresion: expresionLogica
                         ((sim.tipo == T_ENTERO) || (sim.tipo == T_LOGICO)) &&
                         (sim.tipo == $3.tipo))
                         {
-                          $$.tipo = sim.tipo;}
+                          $$.tipo = sim.tipo;
+                          $$.pos = creaVarTemp();
+                          if($2 == OPASIGN){
+                            emite(EASIG, crArgPos($3.pos), crArgNul(), crArgPos($$.pos));
+                          }else{
+                                if($2 == OPASIGNS){
+                                  emite(ESUM, crArgPos($3.pos), crArgPos(sim.desp), crArgPos($$.pos));
+                                }else{
+                                  emite(EDIF, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
+                                }
+
+                            }
+                            emite(EASIG, crArgPos($$.pos), crArgNul(), crArgPos(sim.desp));
+                          }
                         else yyerror("Error en la asignacion");
           }
         }
@@ -193,6 +234,23 @@ expresion: expresionLogica
                 if($3.tipo != T_ENTERO) yyerror("Error en el indice de la array");
                 else{
                   if(sim.telem != $6.tipo) yyerror("Error en el tipo de la asignacion");
+                  else{
+                      $$.tipo = sim.telem;
+                      $$.pos = creaVarTemp();
+                      if($5 == OPASIGN){
+                        emite(EASIG, crArgPos($6.pos), crArgNul(), crArgPos($$.pos));
+                      }else{
+                        if($5 == OPASIGNS){
+                          emite(EAV, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
+                          emite(ESUM, crArgPos($$.pos), crArgPos($6.pos), crArgPos($$.pos));
+                        }else{
+                          emite(EAV, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
+                          emite(EDIF, crArgPos($$.pos), crArgPos($6.pos), crArgPos($$.pos));
+                        }
+
+                      }
+                      emite(EVA, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
+                  }
                 }
                 }
               }
@@ -202,28 +260,56 @@ expresion: expresionLogica
         ;
 
 expresionLogica: expresionIgualdad
-        {$$.tipo = $1.tipo;}
+        {$$.tipo = $1.tipo;
+         $$.pos = $1.pos;
+        }
         | expresionLogica operadorLogico expresionIgualdad
           {$$.tipo = T_ERROR;
-
            if($1.tipo == T_LOGICO && $3.tipo == T_LOGICO){
              $$.tipo = $1.tipo;
-           }else{ yyerror("Error en el operador Logico");}
+             $$.pos = creaVarTemp();
+             if($2 == OPAND){
+                emite(EMULT, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+             }else{
+                emite(ESUM, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+                emite(EMENEQ, crArgPos($$.pos), crArgEnt(1), crArgEtq(si+2));
+                emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.pos));
+             }
 
+           }else{ yyerror("Error en el operador Logico");}
          }
         ;
 
 expresionIgualdad: expresionRelacional
         {
           $$.tipo = $1.tipo;
+          $$.pos = $1.pos;
         }
 	| expresionIgualdad operadorIgualdad expresionRelacional
-      {}
+      {
+        $$.tipo = T_ERROR;
+        if((($1.tipo == T_ENTERO) || ($1.tipo == T_LOGICO)) &&
+            (($3.tipo == T_ENTERO) || ($3.tipo == T_LOGICO)) &&
+              ($1.tipo == $3.tipo)) {
+                $$.tipo = T_LOGICO;
+                $$.pos = creaVarTemp();
+                emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.pos));
+                emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgEtq(si+2));
+                emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.pos));
+        }else{
+          if($1.tipo == T_ERROR || $3.tipo == T_ERROR){
+            noop;
+          }else{
+            yyerror("No se pueden comparar objetos de distinto tipo");
+          }
+        }
+      }
         ;
 
 expresionRelacional: expresionAditiva
               {
                 $$.tipo = $1.tipo;
+                $$.pos = $1.pos;
               }
         | expresionRelacional operadorRelacional expresionAditiva
         {
@@ -232,18 +318,29 @@ expresionRelacional: expresionAditiva
             yyerror("No se pueden comparar objetos de tipos diferentes");
             $$.tipo = T_ERROR;
           }
-          else{$$.tipo = T_LOGICO;}
+          else{
+            $$.tipo = T_LOGICO;
+            $$.pos = creaVarTemp();
+            emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.pos));
+            emite($2, crArgPos($1.pos),crArgPos($3.pos), crArgEtq(si+2));
+            emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.pos));
+          }
         }
-
         ;
 
 expresionAditiva: expresionMultiplicativa
-            {$$.tipo = $1.tipo;
+            {
+              $$.tipo = $1.tipo;
+              $$.pos = $1.pos;
             }
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
-				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-				else {yyerror ("Tipos no validos 229");
+				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
+          $$.tipo = T_ENTERO;
+          $$.pos = creaVarTemp();
+          emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+        }
+				else {yyerror ("Tipos no validos");
               $$.tipo = T_ERROR;
       }
 			}
@@ -252,92 +349,176 @@ expresionAditiva: expresionMultiplicativa
 expresionMultiplicativa: expresionUnaria
 						{
                 $$.tipo = $1.tipo;
+                $$.pos = $1.pos;
             }
         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
-			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
-					$$.tipo = T_ENTERO;}
-			else{	yyerror ("Error en expresion multiplicativa");
-              			$$.tipo = T_ERROR;
-				}
-			}
+  			     {
+               if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
+  					          $$.tipo = T_ENTERO;
+                      $$.pos = creaVarTemp();
+                      emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+                    }
+  			      else{
+                yyerror ("Error en expresion multiplicativa");
+                $$.tipo = T_ERROR;
+  				    }
+  			  }
         ;
 
 expresionUnaria: expresionSufija
 				{
             $$.tipo = $1.tipo;
+            $$.pos = $1.pos;
           }
         | operadorUnario expresionUnaria
           {
-            if($2.tipo != T_LOGICO){
-              $$.tipo = T_ERROR;
+            $$.tipo = T_ERROR;
+            if($2.tipo != T_LOGICO && $2.tipo != T_ENTERO){
               yyerror("Error en expresionUnaria");
+            }else{
+              if($1 == OPNOT){
+                if($2.tipo == T_LOGICO){
+                  $$.tipo = T_LOGICO;
+                  $$.pos = creaVarTemp();
+                  emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.pos));
+                  emite(EDIST, crArgPos($2.pos), crArgEnt(0), crArgEtq(si+2));
+                  emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.pos));
+                }else{
+                  if($2.tipo == T_ERROR)
+                    noop;
+                  else
+                    yyerror("La variable debe de ser logica");
+                }
+              }else{
+                if($2.tipo == T_ENTERO){
+                  $$.tipo = T_ENTERO;
+                  $$.pos = creaVarTemp();
+                  if($1 == OPPOS){
+                    emite(EASIG, crArgPos($2.pos), crArgNul(), crArgPos($$.pos));
+                  }else{
+                    emite($1, crArgPos($2.pos), crArgNul(), crArgPos($$.pos));
+                  }
+                }
+              }
             }
 
         }
 
         | operadorIncremento ID_{
-			      SIMB id = obtenerTDS( $2 );
-			      if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-			      else  $$.tipo = T_ERROR;
-		               }
+			      SIMB id = obtenerTDS($2);
+			      $$.tipo = T_ERROR;
+            if(id.tipo == T_ERROR){
+              yyerror("Variable no declarado");
+            }else{
+              if(id.tipo != T_ENTERO){
+                yyerror("La variable debe de ser entera");
+              }else{
+                $$.tipo = T_ENTERO;
+                $$.pos = creaVarTemp();
+                emite(ESUM, crArgPos(id.desp), crArgEnt($1), crArgPos(id.desp));
+                emite(EASIG, crArgPos(id.desp), crArgNul(), crArgPos($$.pos));
+              }
+            }
+		      }
         ;
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
         {
-          $$.tipo = T_ERROR; SIMB sim = obtenerTDS($1);
-          if(sim.telem == T_ENTERO ) $$.tipo = T_ENTERO;
-          if(sim.telem == T_LOGICO) $$.tipo = T_LOGICO;
+          $$.tipo = T_ERROR;
+          SIMB sim = obtenerTDS($1);
+          if(sim.tipo == T_ERROR){
+            yyerror("Identificadro no declarado");
+          }
+          else{
+            if($3.tipo != T_ENTERO){
+              yyerror("El índice debe de ser entero");
+            }else{
+              $$.tipo = sim.telem;
+              $$.pos = creaVarTemp();
+              emite(EAV, crArgPos(sim.desp), crArgPos($3.pos), crArgPos($$.pos));
+            }
+          }
         }
         | PARENTESIS_AB_ expresion PARENTESIS_CERR_
         {
+          printf("Valor pos expresion: %d linea: %d si: %d \n", $2.pos, yylineno, si);
           $$.tipo = $2.tipo;
+          $$.pos = $2.pos;
         }
-        | ID_ { SIMB sim = obtenerTDS($1);
-                $$.tipo = sim.tipo;
+        | ID_
+            {
+              SIMB id = obtenerTDS($1);
+             if( id.tipo != T_ERROR){
+                  $$.tipo = id.tipo;
+                  $$.pos = id.desp;
+                  }else{
+                    $$.tipo = T_ERROR;
+                  }
+            }
+        | ID_ operadorIncremento {
+          SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
+          if(sim.tipo == T_ERROR){ yyerror("Variable no declarada");
+          }else{
+          if(sim.tipo != T_ENTERO){
+            yyerror("Error en el tipo de la variable");
+          }else{
+            $$.tipo = sim.tipo;
+            $$.pos = creaVarTemp();
+            emite(EASIG, crArgPos(sim.desp), crArgNul(), crArgPos($$.pos));
+            emite(ESUM, crArgPos(sim.desp), crArgEnt($2), crArgPos(sim.desp));
+            }
+          }
         }
-        | ID_ operadorIncremento {SIMB sim = obtenerTDS($1); $$.tipo = T_ERROR;
-                                    if(sim.tipo == T_ENTERO){$$.tipo = T_ENTERO;}
-
+        | CTE_ {$$.tipo = T_ENTERO;
+                $$.pos = creaVarTemp();
+                printf("Hola soy una constante %d, %d, %d \n", $$.pos, si, yylineno );
+                emite(EASIG, crArgEnt($1), crArgNul(), crArgPos($$.pos));
         }
-        | CTE_ {$$.tipo = T_ENTERO}
-        | TRUE_ {$$.tipo = T_LOGICO}
-        | FALSE_ {$$.tipo = T_LOGICO}
+        | TRUE_ {$$.tipo = T_LOGICO;
+                 $$.pos = creaVarTemp();
+                 emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.pos));
+              }
+        | FALSE_ {
+            $$.tipo = T_LOGICO;
+            $$.pos = creaVarTemp();
+            emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.pos));
+          }
         ;
 
-operadorAsignacion: ASIGNACION_
-        | MASIGUAL_
-        | MENOSIGUAL_
+operadorAsignacion: ASIGNACION_ {$$ = OPASIGN;}
+        | MASIGUAL_ {$$ = OPASIGNS;}
+        | MENOSIGUAL_{$$ = OPASIGND;}
         ;
 
-operadorLogico: COMPARADOR_AND_
-        | COMPARADOR_OR_
+operadorLogico: COMPARADOR_AND_ {$$ = OPAND;}
+        | COMPARADOR_OR_ {$$ = OPOR;}
         ;
 
-operadorIgualdad: IGUALDAD_
-        | DESIGUAL_
+operadorIgualdad: IGUALDAD_ {$$ = EIGUAL;}
+        | DESIGUAL_ {$$ = EDIST;}
         ;
 
-operadorRelacional: MAYOR_QUE_
-        | MENOR_QUE_
-        | MAYOR_IGUAL_
-        | MENOR_IGUAL_
+operadorRelacional: MAYOR_QUE_ {$$ = EMAY;}
+        | MENOR_QUE_ {$$ = EMEN;}
+        | MAYOR_IGUAL_ {$$ = EMAYEQ;}
+        | MENOR_IGUAL_ {$$ = EMENEQ;}
         ;
 
-operadorAditivo: SUMA_
-        | RESTA_
+operadorAditivo: SUMA_ {$$ = ESUM;}
+        | RESTA_ {$$ = EDIF;}
         ;
 
-operadorMultiplicativo: MULT_
-        | DIV_
+operadorMultiplicativo: MULT_ {$$ = EMULT;}
+        | DIV_ {$$ = EDIVI;}
         ;
 
-operadorUnario: SUMA_
-        | RESTA_
-        | NEGACION_
+operadorUnario: SUMA_ {$$ = OPPOS;}
+        | RESTA_ {$$ = ESIG;}
+        | NEGACION_ {$$ = OPNOT;}
         ;
 
-operadorIncremento: INCREMENTO_
-        | DECREMENTO_
+operadorIncremento: INCREMENTO_ {$$ = 1;}
+        | DECREMENTO_ {$$ = -1; }
         ;
 
 %%

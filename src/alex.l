@@ -30,27 +30,28 @@ comentario \/\/[^\n]*\n
 "true" {yylval.cent = 1; devolver( TRUE_);}
 "false" {yylval.cent = 0; devolver( FALSE_);}
 
+"+="  { devolver( MASIGUAL_);}
+"-="  { devolver( MENOSIGUAL_);}
+"++"  { devolver( INCREMENTO_);}
+"--"  { devolver( DECREMENTO_);}
 "+"  { devolver( SUMA_);}
 "-"  { devolver( RESTA_);}
 "*"  { devolver( MULT_);}
 "/"  { devolver( DIV_);}
 
-"="  { devolver( ASIGNACION_);}
-"+="  { devolver( MASIGUAL_);}
-"-="  { devolver( MENOSIGUAL_);}
-"++"  { devolver( INCREMENTO_);}
-"--"  { devolver( DECREMENTO_);}
-
-
 "=="  { devolver( IGUALDAD_);}
 "!="  { devolver( DESIGUAL_);}
-"!"   { devolver( NEGACION_);}
-"&&"  { devolver( COMPARADOR_AND_);}
-"||"  { devolver( COMPARADOR_OR_);}
 "<="  { devolver( MENOR_IGUAL_);}
 ">="  { devolver( MAYOR_IGUAL_);}
+"="  { devolver( ASIGNACION_);}
+"!"   { devolver( NEGACION_);}
 "<"   { devolver( MENOR_QUE_);}
 ">"   { devolver( MAYOR_QUE_);}
+
+"&&"  { devolver( COMPARADOR_AND_);}
+"||"  { devolver( COMPARADOR_OR_);}
+
+
 
 
 {comentario}  {}
